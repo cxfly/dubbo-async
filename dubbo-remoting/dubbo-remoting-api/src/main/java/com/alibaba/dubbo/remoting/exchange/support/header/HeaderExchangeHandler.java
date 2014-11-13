@@ -16,7 +16,10 @@
 package com.alibaba.dubbo.remoting.exchange.support.header;
 
 import java.net.InetSocketAddress;
+import java.util.concurrent.Executors;
 
+import akka.actor.ActorSystem;
+import akka.dispatch.OnComplete;
 import com.alibaba.dubbo.common.Constants;
 import com.alibaba.dubbo.common.URL;
 import com.alibaba.dubbo.common.logger.Logger;
@@ -33,6 +36,9 @@ import com.alibaba.dubbo.remoting.exchange.Request;
 import com.alibaba.dubbo.remoting.exchange.Response;
 import com.alibaba.dubbo.remoting.exchange.support.DefaultFuture;
 import com.alibaba.dubbo.remoting.transport.ChannelHandlerDelegate;
+import scala.PartialFunction;
+import scala.concurrent.ExecutionContext;
+import scala.concurrent.Future;
 
 /**
  * ExchangeReceiver
@@ -49,6 +55,8 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
     public static String          KEY_WRITE_TIMESTAMP = HeartbeatHandler.KEY_WRITE_TIMESTAMP;
 
     private final ExchangeHandler handler;
+
+    private final ExecutionContext ctx = ActorSystem.create("future-system").dispatcher();
 
     public HeaderExchangeHandler(ExchangeHandler handler){
         if (handler == null) {
@@ -156,7 +164,7 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
                     .equals(NetUtils.filterLocalHost(address.getAddress().getHostAddress()));
     }
 
-    public void received(Channel channel, Object message) throws RemotingException {
+    public void received(final Channel channel, Object message) throws RemotingException {
         channel.setAttribute(KEY_READ_TIMESTAMP, System.currentTimeMillis());
         ExchangeChannel exchangeChannel = HeaderExchangeChannel.getOrAddChannel(channel);
         try {
@@ -167,8 +175,27 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
                     handlerEvent(channel, request);
                 } else {
                     if (request.isTwoWay()) {
-                        Response response = handleRequest(exchangeChannel, request);
-                        channel.send(response);
+                        final Response response = handleRequest(exchangeChannel, request);
+                        if(response.getResult() instanceof Future) {
+                            ((Future) response.getResult()).onSuccess(new OnComplete() {
+                                @Override
+                                public void onComplete(Throwable failure, Object success) throws Throwable {
+                                    if (failure == null) {
+                                        response.setResult(success);
+                                        response.setStatus(Response.OK);
+                                    }else {
+                                        response.setStatus(Response.SERVER_ERROR);
+                                        response.setErrorMessage(StringUtils.toString(failure));
+
+                                    }
+                                    channel.send(response);
+
+                                }
+                            }, ctx);
+                        }else{
+                            channel.send(response);
+                        }
+
                     } else {
                         handler.received(exchangeChannel, request.getData());
                     }

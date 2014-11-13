@@ -15,8 +15,12 @@
  */
 package com.alibaba.dubbo.demo;
 
+import scala.concurrent.Future;
+
 public interface DemoService {
 
 	String sayHello(String name);
+
+	Future sayAsyncHello(String name);
 
 }
