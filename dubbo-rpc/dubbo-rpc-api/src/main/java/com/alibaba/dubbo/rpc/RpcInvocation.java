@@ -84,6 +84,16 @@ public class RpcInvocation implements Invocation, Serializable {
         this(method.getName(), method.getParameterTypes(), arguments, null, null);
     }
 
+    private Class<?> returnType;
+    public RpcInvocation(Method method, Object[] arguments, Class<?> returnType) {
+        this(method, arguments);
+        this.returnType = returnType;
+    }
+
+    public Class<?> getReturnType() {
+        return this.returnType;
+    }
+
     public RpcInvocation(Method method, Object[] arguments, Map<String, String> attachment) {
         this(method.getName(), method.getParameterTypes(), arguments, attachment, null);
     }

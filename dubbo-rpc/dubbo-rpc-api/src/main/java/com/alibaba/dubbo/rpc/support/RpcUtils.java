@@ -25,7 +25,9 @@ import com.alibaba.dubbo.common.logger.Logger;
 import com.alibaba.dubbo.common.logger.LoggerFactory;
 import com.alibaba.dubbo.common.utils.ReflectUtils;
 import com.alibaba.dubbo.rpc.Invocation;
+import com.alibaba.dubbo.rpc.RpcException;
 import com.alibaba.dubbo.rpc.RpcInvocation;
+import scala.concurrent.Future;
 
 /**
  * RpcUtils
@@ -151,15 +153,22 @@ public class RpcUtils {
     
     public static boolean isAsync(URL url, Invocation inv) {
     	boolean isAsync ;
+
+
+        //此优先及最高
+        if (inv.getReturnType() != null && inv.getReturnType() == Future.class) {
+            isAsync = true;
+        }else
     	//如果Java代码中设置优先.
     	if (Boolean.TRUE.toString().equals(inv.getAttachment(Constants.ASYNC_KEY))) {
     		isAsync = true;
     	} else {
 	    	isAsync = url.getMethodParameter(getMethodName(inv), Constants.ASYNC_KEY, false);
     	}
-    	return isAsync;
+
+        return isAsync;
     }
-    
+
     public static boolean isOneway(URL url, Invocation inv) {
     	boolean isOneway ;
     	//如果Java代码中设置优先.

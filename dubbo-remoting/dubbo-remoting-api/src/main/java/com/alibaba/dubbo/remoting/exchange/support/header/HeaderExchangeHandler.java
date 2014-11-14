@@ -36,9 +36,14 @@ import com.alibaba.dubbo.remoting.exchange.Request;
 import com.alibaba.dubbo.remoting.exchange.Response;
 import com.alibaba.dubbo.remoting.exchange.support.DefaultFuture;
 import com.alibaba.dubbo.remoting.transport.ChannelHandlerDelegate;
+import com.alibaba.dubbo.rpc.AsyncContext;
+import com.alibaba.dubbo.rpc.Result;
+import com.alibaba.dubbo.rpc.RpcResult;
 import scala.PartialFunction;
 import scala.concurrent.ExecutionContext;
 import scala.concurrent.Future;
+
+import static com.alibaba.dubbo.rpc.AsyncContext.context;
 
 /**
  * ExchangeReceiver
@@ -56,7 +61,6 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
 
     private final ExchangeHandler handler;
 
-    private final ExecutionContext ctx = ActorSystem.create("future-system").dispatcher();
 
     public HeaderExchangeHandler(ExchangeHandler handler){
         if (handler == null) {
@@ -176,14 +180,15 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
                 } else {
                     if (request.isTwoWay()) {
                         final Response response = handleRequest(exchangeChannel, request);
-                        if(response.getResult() instanceof Future) {
-                            ((Future) response.getResult()).onSuccess(new OnComplete() {
+                        if(response.getResult() instanceof Result && ((Result) response.getResult()).getValue() instanceof Future) {
+
+                            (((Future) ((Result) response.getResult()).getValue())).onComplete(new OnComplete() {
                                 @Override
                                 public void onComplete(Throwable failure, Object success) throws Throwable {
                                     if (failure == null) {
-                                        response.setResult(success);
+                                        response.setResult(new RpcResult(success));
                                         response.setStatus(Response.OK);
-                                    }else {
+                                    } else {
                                         response.setStatus(Response.SERVER_ERROR);
                                         response.setErrorMessage(StringUtils.toString(failure));
 
@@ -191,7 +196,7 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
                                     channel.send(response);
 
                                 }
-                            }, ctx);
+                            }, context());
                         }else{
                             channel.send(response);
                         }

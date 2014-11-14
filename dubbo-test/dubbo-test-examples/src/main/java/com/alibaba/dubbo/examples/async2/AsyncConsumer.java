@@ -15,13 +15,14 @@
  */
 package com.alibaba.dubbo.examples.async2;
 
-import com.alibaba.dubbo.examples.async.api.AsyncService;
 import com.alibaba.dubbo.examples.async2.api.Echo;
-import com.alibaba.dubbo.rpc.RpcContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
+import scala.concurrent.Await;
+import scala.concurrent.Future;
+import scala.concurrent.duration.Duration;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 
 /**
  * CallbackConsumer
@@ -34,11 +35,34 @@ public class AsyncConsumer {
         String config = AsyncConsumer.class.getPackage().getName().replace('.', '/') + "/async-consumer.xml";
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext(config);
         context.start();
-        
-        final Echo echo = (Echo)context.getBean("echoService");
 
-        System.out.println(echo);
-        
+
+        final Echo echo = (Echo)context.getBean("echoService");
+        //warn
+        System.out.println(echo.syncEcho("hello world"));
+        System.out.println(echo.syncEcho("hello world"));
+        System.out.println(echo.syncEcho("hello world"));
+
+        Future<String> future = echo.asyncEcho("async hello world");
+        System.out.println(Await.result(future, Duration.create(10, TimeUnit.DAYS)));
+
+         future = echo.asyncEcho("async hello world");
+        System.out.println(Await.result(future, Duration.create(10, TimeUnit.DAYS)));
+        future = echo.asyncEcho("async hello world");
+        System.out.println(Await.result(future, Duration.create(10, TimeUnit.DAYS)));
+
+        long start = System.currentTimeMillis();
+        System.out.println(echo.syncEcho("hello world"));
+        long mid = System.currentTimeMillis();
+//        System.out.println(echo.syncEcho("hello world"));
+//        System.out.println(echo.syncEcho("hello world"));
+
+        future = echo.asyncEcho("async hello world");
+        System.out.println(Await.result(future, Duration.create(10, TimeUnit.DAYS)));
+        long end = System.currentTimeMillis();
+
+        System.out.println("sync:" + (mid - start));
+        System.out.println("async:" + (end - mid));
 //        Future<String> f = RpcContext.getContext().asyncCall(new Callable<String>() {
 //            public String call() throws Exception {
 //                return asyncService.sayHello("async call request");
@@ -54,7 +78,10 @@ public class AsyncConsumer {
 //            }
 //        });
 //
-        System.in.read();
+
+        Thread.sleep(3000);
+        System.exit(0);
+
     }
 
 }

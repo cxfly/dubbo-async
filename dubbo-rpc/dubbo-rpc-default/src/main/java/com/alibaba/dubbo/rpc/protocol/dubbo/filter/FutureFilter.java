@@ -69,7 +69,7 @@ public class FutureFilter implements Filter {
     
     private void asyncCallback(final Invoker<?> invoker, final Invocation invocation) {
         Future<?> f = RpcContext.getContext().getFuture();
-        if (f instanceof FutureAdapter) {
+        if (f instanceof FutureAdapter &&(invocation.getReturnType() == null  || invocation.getReturnType()!= scala.concurrent.Future.class)) {
             ResponseFuture future = ((FutureAdapter<?>)f).getFuture();
             future.setCallback(new ResponseCallback() {
                 public void done(Object rpcResult) {

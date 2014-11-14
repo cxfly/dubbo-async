@@ -52,6 +52,8 @@ public interface Invocation {
 	 */
 	Object[] getArguments();
 
+
+	Class<?> getReturnType();
 	/**
 	 * get attachments.
 	 * 

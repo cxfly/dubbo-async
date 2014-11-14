@@ -22,12 +22,12 @@
 
     <dubbo:application name="async-provider"  />
     
-    <dubbo:registry address="multicast://224.5.6.7:1234" />
+    <dubbo:registry address="zookeeper://127.0.0.1:2181" />
     
     <dubbo:protocol name="dubbo" port="20880" />
     
     <bean id="echoService" class="com.alibaba.dubbo.examples.async2.impl.EchoImpl" />
     
-	<dubbo:service interface="com.alibaba.dubbo.examples.async2.api.Echo" ref="asyncService" />
+	<dubbo:service interface="com.alibaba.dubbo.examples.async2.api.Echo" ref="echoService" />
 	
 </beans>

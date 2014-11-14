@@ -41,6 +41,11 @@ public class MockInvocation implements Invocation {
         return new Object[] { "aa" };
     }
 
+
+    public Class<?> getReturnType() {
+        return null;
+    }
+
     public Map<String, String> getAttachments() {
         Map<String, String> attachments = new HashMap<String, String>();
         attachments.put(Constants.PATH_KEY, "dubbo");
