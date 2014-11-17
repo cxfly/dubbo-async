@@ -91,21 +91,40 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
                 return new RpcResult();
             } else if (isAsync) {
             	ResponseFuture future = currentClient.request(inv, timeout) ;
-                final Promise.DefaultPromise promise = new Promise.DefaultPromise();
-                future.setCallback(new ResponseCallback() {
-                    public void done(Object response) {
-                        promise.success(((RpcResult) response).getValue());
-                    }
-
-                    public void caught(Throwable exception) {
-                        promise.failure(exception);
-                    }
-                });
-                RpcContext.getContext().setFuture(new FutureAdapter<Object>(future));
-
-
                 RpcResult r = new RpcResult();
-                r.setValue(promise);
+                //if scala.concurrent.Future,then return Promise
+                if(RpcUtils.isFutureReturn(inv)) {
+                    final Promise.DefaultPromise promise = new Promise.DefaultPromise();
+                    future.setCallback(new ResponseCallback() {
+                        public void done(Object rpcResult) {
+                            if (rpcResult == null) {
+                                logger.error(new IllegalStateException("invalid result value : null, expected " + Result.class.getName()));
+                                return;
+                            }
+                            ///must be rpcResult
+                            if (!(rpcResult instanceof Result)) {
+                                logger.error(new IllegalStateException("invalid result type :" + rpcResult.getClass() + ", expected " + Result.class.getName()));
+                                return;
+                            }
+                            Result result = (Result) rpcResult;
+                            if (result.hasException()) {
+                                promise.failure(result.getException());
+                            } else {
+                                promise.success(result.getValue());
+                            }
+                        }
+
+                        public void caught(Throwable exception) {
+                            promise.failure(exception);
+                        }
+                    });
+
+
+                    r.setValue(promise);
+                }else{
+                    //do by dubbo
+                    RpcContext.getContext().setFuture(new FutureAdapter<Object>(future));
+                }
                 return r;
             } else {
             	RpcContext.getContext().setFuture(null);
