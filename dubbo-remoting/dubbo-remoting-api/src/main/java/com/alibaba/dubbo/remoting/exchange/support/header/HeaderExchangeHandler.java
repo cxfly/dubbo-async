@@ -180,6 +180,7 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
                 } else {
                     if (request.isTwoWay()) {
                         final Response response = handleRequest(exchangeChannel, request);
+                        //if value is not future(include null and Exception) then response
                         if(response.getResult() instanceof Result && ((Result) response.getResult()).getValue() instanceof Future) {
 
                             (((Future) ((Result) response.getResult()).getValue())).onComplete(new OnComplete() {
