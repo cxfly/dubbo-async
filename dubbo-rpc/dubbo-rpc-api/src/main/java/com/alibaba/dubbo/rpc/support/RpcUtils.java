@@ -25,7 +25,6 @@ import com.alibaba.dubbo.common.logger.Logger;
 import com.alibaba.dubbo.common.logger.LoggerFactory;
 import com.alibaba.dubbo.common.utils.ReflectUtils;
 import com.alibaba.dubbo.rpc.Invocation;
-import com.alibaba.dubbo.rpc.RpcException;
 import com.alibaba.dubbo.rpc.RpcInvocation;
 import scala.concurrent.Future;
 
@@ -156,7 +155,7 @@ public class RpcUtils {
 
 
         //此优先及最高
-        if (inv.getReturnType() != null && inv.getReturnType() == Future.class) {
+        if (isFutureReturn(inv)) {
             isAsync = true;
         }else
     	//如果Java代码中设置优先.
@@ -178,6 +177,10 @@ public class RpcUtils {
     		isOneway = ! url.getMethodParameter(getMethodName(inv), Constants.RETURN_KEY, true);
     	}
     	return isOneway;
+    }
+
+    public static boolean isFutureReturn(Invocation inv) {
+        return inv.getReturnType() != null && inv.getReturnType() == Future.class;
     }
     
 }
