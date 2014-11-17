@@ -126,7 +126,6 @@ public class S3Impl implements S3 {
         //thread no block,s1 return immediately
         Future<String> future = s1.s1(text);
 
-        //after s1 response,call s2
         return future.flatMap(new Mapper<String, Future<String>>() {
             @Override
             public Future<String> apply(String parameter) {
