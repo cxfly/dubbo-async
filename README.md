@@ -45,7 +45,7 @@ This situation is very bad for throughput,so this fork is solving this situation
 ##Futures
 
 * support return type:[`scala.concurrent.Future`](http://www.scala-lang.org/api/2.10.2/#scala.concurrent.Future)
-* all rpc call done by callback and aviod blocking
+* all rpc call done by callback and avoid blocking
 
 ##Build
 
