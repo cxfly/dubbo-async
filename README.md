@@ -7,7 +7,7 @@ It's like twitter's [finagle](https://twitter.github.io/finagle),but it compared
 
 There are 3 service,s1,s2,s3
 
-s2 is independent on s1
+s2 is dependent on s1
 
 s3 is dependent on s2
 
@@ -60,99 +60,81 @@ It is is very bad for throughput,so this fork is solving this situation
 
 ##Demo
 api:
+```java
+public interface Test {
+    public String syncTest(String text);
+    public Future<String> asyncTest(String text);
+}
+```
+
 s1
 ```java
-public interface S1 {
-
-    public Future<String> s1(String text);
+public interface Test1 extends Test{
 }
 ```
 s2
-
 ```java
-
-public interface S2 {
-
-    public Future<String> s2(String text);
+public interface Test2 extends Test {
 }
 ```
-
 s3
 ```java
-
-public interface S3 {
-    public Future<String> s1(String text);
-
-
-    public Future<String> s1s1(String text);
+public interface Test3 extends Test{
 }
 ```
 
 impl:
 s1Impl
 ```java
-
-public class S1Impl implements S1 {
-
-    public Future<String> s1(String text) {
-        return Futures.successful("s1:" + text);
+public class Test1Impl implements Test1 {
+    @Override
+    public String syncTest(String str) {
+        return "test1_sync:" + str;
+    }
+    @Override
+    public Future<String> asyncTest(String str) {
+        return Futures.successful("test1_async:" + str);
     }
 }
-
 ```
 
 s2Impl
 ```java
-public class S2Impl implements S2 {
-
-    public Future<String> s2(String text) {
-        return Futures.successful("s2:" + text);
+public class Test2Impl implements Test2 {
+    private Test1 test1;
+    public Test1 getTest1() {
+        return test1;
+    }
+    public void setTest1(Test1 test1) {
+        this.test1 = test1;
+    }
+    @Override
+    public String syncTest(String str) {
+        return test1.syncTest("test2_sync:" + str);
+    }
+    @Override
+    public Future<String> asyncTest(String text) {
+        return test1.asyncTest("test2_async:" + text);
     }
 }
-
 ```
 s3Impl
 ```java
-public class S3Impl implements S3 {
-
-
-    private S1 s1;
-
-
-    private S2 s2;
-
-
-    public Future<String> s1(String text) {
-        Future<String> future = s1.s1(text);
-        return future;
+public class Test3Impl implements Test3 {
+    private Test2 test2;
+    public Test2 getTest2() {
+        return test2;
     }
-
-    public Future<String> s1s1(String text) {
-        //thread no block,s1 return immediately
-        Future<String> future = s1.s1(text);
-
-        return future.flatMap(new Mapper<String, Future<String>>() {
-            @Override
-            public Future<String> apply(String parameter) {
-                return s2.s2(parameter);
-            }
-        }, AsyncContext.context());
+    public void setTest2(Test2 test2) {
+        this.test2 = test2;
     }
-
-    public S1 getS1() {
-        return s1;
+    @Override
+    public String syncTest(String str) {
+        return test2.syncTest("test3_sync:" + str);
     }
-
-    public void setS1(S1 s1) {
-        this.s1 = s1;
-    }
-
-    public S2 getS2() {
-        return s2;
-    }
-
-    public void setS2(S2 s2) {
-        this.s2 = s2;
+    @Override
+    public Future<String> asyncTest(String text) {
+        return test2.asyncTest("test3_async:" + text);
     }
 }
 ```
@@ -160,12 +142,30 @@ test:
 
 ```java
 
- Future<String> future = this.s3.s1s1("hello");
+ Future<String> future = this.s3.asyncTest("hello");
         String result = Await.result(future, Duration.create(10, TimeUnit.SECONDS));
-        assertEquals("s2:s1:hello", result);
-
+        System.out.println(result)
 ```
 ##Benchmark
+proxy:一个http-server,convert http request to rpc call
+
+test1:two method:syncTest,AsyncTest
+
+test2:two method:syncTest,AsyncTest
+
+test3:two method:syncTest,AsyncTest
+
+all service is deployed in different server
+
+bench result:
+
+service  | sync         |async
+---------|--------------|----------
+proxy->s1| 1.1w         |1.3w
+proxy->s2| 5K           |9K
+proxy->s3| 3.5-4k       |8K
+
+According to the above,the performance of async is twice as large as sync
 
 ##Question
 Is there any problem in use, welcome back to me, you can communicate with me with the following contact
