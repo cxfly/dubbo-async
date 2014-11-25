@@ -1,6 +1,6 @@
 
 Dubbo-future is async rpc framework based on dubbo.The most important future is that the return type of an interface method support [`scala.concurrent.Future`](http://www.scala-lang.org/api/2.10.2/#scala.concurrent.Future).
-It's like twitter's [finagle](https://twitter.github.io/finagle),but it compared with the former more simple
+It's like twitter's [finagle](https://twitter.github.io/finagle),but it is more simple
 
 
 ##scene
@@ -147,7 +147,7 @@ test:
         System.out.println(result)
 ```
 ##Benchmark
-proxy:一个http-server,convert http request to rpc call
+proxy:http-server,convert http request to rpc call
 
 test1:two method:syncTest,AsyncTest
 
@@ -167,6 +167,7 @@ proxy->s3| 3.5-4k       |8K
 
 According to the above,the performance of async is twice as large as sync
 
+See [dubbo-future-simple](https://github.com/kubbo/dubbo-async/tree/master/dubbo-future-simple)  
 ##Question
 Is there any problem in use, welcome back to me, you can communicate with me with the following contact
 
