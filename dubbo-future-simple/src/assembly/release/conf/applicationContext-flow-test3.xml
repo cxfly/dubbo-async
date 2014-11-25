@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context-3.0.xsd
+       http://code.alibabatech.com/schema/dubbo http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+
+
+    <dubbo:application name="provider" />
+    <dubbo:registry protocol="zookeeper" address="10.32.24.231:2181,10.32.24.232:2181,10.32.24.233:2181" />
+    <dubbo:protocol name="dubbo" port="20880" />
+
+    <dubbo:service interface="com.kubbo.future.simple.api.Test3" ref="test3" protocol="dubbo"/>
+
+    <dubbo:reference interface="com.kubbo.future.simple.api.Test2" id="test2" />
+    <bean id="test3" class="com.kubbo.future.simple.impl.Test3Impl">
+        <property name="test2" ref="test2" />
+    </bean>
+
+
+</beans>
