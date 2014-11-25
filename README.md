@@ -1,44 +1,51 @@
-##dubbo+Future
 
-There are 3 provider,s1,s2,s3
+Dubbo-future is async rpc framework based on dubbo.The most important future is that the return type of an interface method support [`scala.concurrent.Future`](http://www.scala-lang.org/api/2.10.2/#scala.concurrent.Future).
+It's like twitter's [finagle](https://twitter.github.io/finagle),but it compared with the former more simple
 
-s1 is independent on s2
 
-s3 is dependent on s1,s2
+##scene
 
-    t
-    |       consumer
-    |         | ------->rpc call(block)
-    |         |
-    |         s3
-    |         |--
-    |           |  ----->rpc call(block)
-    |           s1
-    |          -|
-    |         |
-    |         |
-    |         do something
-    |         |
-    |         |--
-    |           |------->rpc call(block)
-    |           s2
-    |          -|
-    |         |
-    |         |
-    |        return
+There are 3 service,s1,s2,s3
 
-When a consumer call s3,consumer should wait the response of s1 and s2 complete the consumer thread is blocked,
+s2 is independent on s1
 
+s3 is dependent on s2
+
+    time
+    |       consumer                                                                        |        
+    |         | ------->rpc call(block)                                                     |
+    |         |                                                                             |
+    |         s3                                                        |                   |
+    |         |-----                                                    |                   |c
+    |               |  ----->rpc call(block)                            |                   |o
+    |               |                                                   |                   |n
+                    s2                                                  |s3                 |s
+                    |---                            |s2                 |b                  |u
+                        |                           |b                  |l                  |m
+                        |---rpc call(block)         |l                  |o                  |e
+                        s1                          |o                  |c                  |r
+                        |                           |c                  |k                  |
+                        |                           |k                  |i                  |b
+                        do th                       |                   |n                  |l
+                    |---                                                |g                  |o
+    |               |                                                   |                   |c
+                    |                                                   |                   |k
+                    do sth                                              |                   |i
+    |         ------                                                    |                   |n
+    |         |                                                                             |g
+    |         to sth                                                                        |
+    |         |                                                                             |
+    |        return                                                                         |
+
+When a consumer call s3,the consumer's thread is blocking before the response of s2 and s2 is waiting the response of s1
 * consumer thread is blocking for s3 return
-* s3 thread is blocking for s1 return
 * s3 thread is blocking for s2 return
+* s2 thread is blocking for s1 return
 
-What is worse,if s1 is call another provider(s4) and s4 is very slow,the result is s3,s1 will be very slow.
-that will be terrible.
+What is worse,if one of the services is slower,the front caller will be blocking very long time
+that will be terrible and waste of resources.
 
-This situation is very bad for throughput,so this fork is solving this situation
-
-
+It is is very bad for throughput,so this fork is solving this situation
 
 
 
@@ -48,13 +55,11 @@ This situation is very bad for throughput,so this fork is solving this situation
 * all rpc call done by callback and avoid blocking
 
 ##Build
-
 * Latest stable Oracle JDK 6
 * Latest stable Apache Maven
 
 ##Demo
 api:
-
 s1
 ```java
 public interface S1 {
