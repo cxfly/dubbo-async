@@ -1,6 +1,7 @@
 package com.kubbo.future.simple.impl;
 
 
+import akka.dispatch.Futures;
 import com.kubbo.future.simple.api.Test1;
 import com.kubbo.future.simple.api.Test2;
 import scala.concurrent.Future;
@@ -34,5 +35,10 @@ public class Test2Impl implements Test2 {
     @Override
     public Future<String> asyncTest(String text) {
         return test1.asyncTest("test2_async:" + text);
+    }
+
+    @Override
+    public Future<String> test2(String text) {
+        return Futures.successful("test2:" + text);
     }
 }

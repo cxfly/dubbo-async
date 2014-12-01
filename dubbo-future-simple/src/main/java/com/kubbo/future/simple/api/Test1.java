@@ -1,5 +1,7 @@
 package com.kubbo.future.simple.api;
 
+import scala.concurrent.Future;
+
 /**
  * <title>Test1</title>
  * <p></p>
@@ -10,4 +12,5 @@ package com.kubbo.future.simple.api;
  */
 public interface Test1 extends Test{
 
+    public Future<String> test1(String text);
 }
