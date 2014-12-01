@@ -22,8 +22,8 @@ public class HttpServerInitializer extends ChannelInitializer<SocketChannel> {
         ChannelPipeline p = ch.pipeline();
 
         p.addLast("codec", new HttpServerCodec());
-        p.addLast("aggregator", new HttpObjectAggregator(10 * _1M));
-        p.addLast("timeout", new ReadTimeoutHandler(10));
+        p.addLast("aggregator", new HttpObjectAggregator(_1M * _1M));
+        p.addLast("timeout", new ReadTimeoutHandler(30));
         p.addLast("handler", new HttpServerHandler());
 
     }

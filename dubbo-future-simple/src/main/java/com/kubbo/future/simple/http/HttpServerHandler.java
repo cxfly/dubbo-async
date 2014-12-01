@@ -9,12 +9,17 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.multipart.Attribute;
+import io.netty.handler.codec.http.multipart.HttpPostRequestDecoder;
+import io.netty.handler.codec.http.multipart.InterfaceHttpData;
 import io.netty.handler.timeout.ReadTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import scala.concurrent.Future;
+
+import java.util.List;
 
 /**
  * Created by jiangyou on 14-11-18.
@@ -36,9 +41,25 @@ public class HttpServerHandler extends SimpleChannelInboundHandler<HttpObject> {
 
 
             QueryStringDecoder decoder = new QueryStringDecoder(request.getUri());
-            String service = decoder.parameters().get("service").get(0);
+            String service = decoder.parameters().containsKey("service") ? decoder.parameters().get("service").get(0) : null;
             String text = decoder.parameters().get("text").get(0);
             String async = decoder.parameters().get("async").get(0);
+            //get large data from post
+            if(request.getMethod() == HttpMethod.POST){
+                HttpPostRequestDecoder postDecoder = new HttpPostRequestDecoder(request);
+                try {
+                    InterfaceHttpData httpData = postDecoder.getBodyHttpData("text");
+                    if (httpData != null && httpData.getHttpDataType() == InterfaceHttpData.HttpDataType.Attribute) {
+                        text = ((Attribute) httpData).getValue();
+                    }
+                }catch(HttpPostRequestDecoder.EndOfDataDecoderException e){
+                }
+
+            }
+            if(service == null){
+                send200(ctx,text);
+                return;
+            }
             Test test = (Test) context.getBean(service);
             if ("true".equals(async)) {
                 Future<String> future = test.asyncTest(text);
